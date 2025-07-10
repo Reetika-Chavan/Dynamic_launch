@@ -12,10 +12,10 @@ const stack = contentstack.stack({
 
 async function getLaunchEntries() {
   const response = await stack
-    .ContentType('launchconfig')
-    .Query()
-    .toJSON()
-    .find()
+  .contentType('launchconfig')  // ✅ correct
+  .entry()
+  .toJSON()
+  .find()
 
   const entries = response?.[0] || []
 
