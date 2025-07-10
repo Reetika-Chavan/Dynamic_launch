@@ -2,20 +2,20 @@ import fs from 'fs'
 import path from 'path'
 import contentstack from '@contentstack/delivery-sdk'
 import dotenv from 'dotenv'
+
 dotenv.config()
 
 const stack = contentstack.stack({
-  apiKey: process.env.NEXT_PUBLIC_CONTENTSTACK_API_KEY,
-  deliveryToken: process.env.NEXT_PUBLIC_CONTENTSTACK_DELIVERY_TOKEN,
-  environment: process.env.NEXT_PUBLIC_CONTENTSTACK_ENVIRONMENT,
+  apiKey: process.env.NEXT_PUBLIC_CONTENTSTACK_API_KEY || '',
+  deliveryToken: process.env.NEXT_PUBLIC_CONTENTSTACK_DELIVERY_TOKEN || '',
+  environment: process.env.NEXT_PUBLIC_CONTENTSTACK_ENVIRONMENT || '',
 })
 
 async function getLaunchEntries() {
   const response = await stack
-  .contentType('launchconfig')  // ✅ correct
-  .entry()
-  .toJSON()
-  .find()
+    .contentType('launchconfig')
+    .query()
+    .find()
 
   const entries = response?.[0] || []
 
