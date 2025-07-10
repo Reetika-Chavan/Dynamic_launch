@@ -14,7 +14,7 @@ const stack = contentstack.stack({
 async function getLaunchEntries() {
   const response = await stack
     .contentType('launchconfig')
-    .query()
+    .entries()
     .find()
 
   const entries = response?.[0] || []
