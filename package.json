@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-launch-config": "ts-node updateLaunchConfig.ts",
+    "update-launch-config": "ts-node updateLaunchConfig.mjs",
     "prebuild": "npm run update-launch-config"
   },
   "dependencies": {
