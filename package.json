@@ -6,11 +6,14 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-launch-config": "ts-node updateLaunchConfig.ts",
+    "prebuild": "npm run update-launch-config"
   },
   "dependencies": {
     "@contentstack/live-preview-utils": "^3.2.4",
     "contentstack": "^3.26.0",
+    "dotenv": "^17.2.0",
     "lucide-react": "^0.525.0",
     "next": "15.3.4",
     "react": "^19.0.0",
