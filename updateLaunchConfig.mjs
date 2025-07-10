@@ -1,23 +1,26 @@
-import fs from 'fs'
-import path from 'path'
-import contentstack from '@contentstack/delivery-sdk'
-import dotenv from 'dotenv'
+import fs from 'fs';
+import path from 'path';
+import contentstack from '@contentstack/delivery-sdk';
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
+// Setup stack
 const stack = contentstack.stack({
   apiKey: process.env.NEXT_PUBLIC_CONTENTSTACK_API_KEY || '',
   deliveryToken: process.env.NEXT_PUBLIC_CONTENTSTACK_DELIVERY_TOKEN || '',
   environment: process.env.NEXT_PUBLIC_CONTENTSTACK_ENVIRONMENT || '',
-})
+});
 
+// Fetch entries from launchconfig
 async function getLaunchEntries() {
   const response = await stack
     .contentType('launchconfig')
-    .entries()
-    .find()
+    .query()
+    .toJSON()
+    .find();
 
-  const entries = response?.[0] || []
+  const entries = response?.[0] || [];
 
   const redirects = entries
     .filter(entry => entry.title === 'redirect')
@@ -25,21 +28,21 @@ async function getLaunchEntries() {
       source: entry.source,
       destination: entry.destination,
       status_code: entry.status_code || 301,
-    }))
+    }));
 
   const rewrites = entries
     .filter(entry => entry.title === 'rewrite')
     .map(entry => ({
       source: entry.source,
       destination: entry.destination,
-    }))
+    }));
 
   const cacheRules = entries
     .filter(entry => entry.title === 'cache')
     .map(entry => ({
       path: entry.source,
       cache_control: entry.cache_control || 'no-cache',
-    }))
+    }));
 
   return {
     redirects,
@@ -47,18 +50,19 @@ async function getLaunchEntries() {
     cache: {
       rules: cacheRules,
     },
-  }
+  };
 }
 
+// Write launch.json file
 async function updateLaunchJson() {
   try {
-    const launchData = await getLaunchEntries()
-    const filePath = path.resolve('./launch.json')
-    fs.writeFileSync(filePath, JSON.stringify(launchData, null, 2))
-    console.log('✅ launch.json successfully generated from Contentstack!')
+    const launchData = await getLaunchEntries();
+    const filePath = path.resolve('./launch.json');
+    fs.writeFileSync(filePath, JSON.stringify(launchData, null, 2));
+    console.log('✅ launch.json successfully generated from Contentstack!');
   } catch (error) {
-    console.error('❌ Error generating launch.json:', error)
+    console.error('❌ Error generating launch.json:', error);
   }
 }
 
-updateLaunchJson()
+updateLaunchJson();
