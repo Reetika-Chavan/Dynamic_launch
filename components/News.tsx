@@ -1,37 +1,27 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Trophy, Flag, Menu, X } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-
-
-const newsItems = [
-  {
-    id: 1,
-    title: "Verstappen Clinches Another Victory",
-    image: "https://images.unsplash.com/photo-1529429611270-82b9d138fb0f?w=800",
-    summary: "Max Verstappen continues his dominance with yet another win in the 2024 F1 season.",
-    date: "July 1, 2024",
-  },
-  {
-    id: 2,
-    title: "Hamilton Hints at Retirement",
-    image: "https://images.unsplash.com/photo-1506806732259-39c2d0268443?w=800",
-    summary: "Lewis Hamilton speaks about his future plans and potential retirement.",
-    date: "June 27, 2024",
-  },
-  {
-    id: 3,
-    title: "Ferrari Unveils New Upgrades",
-    image: "https://images.unsplash.com/photo-1558981001-f68792c0fbcc?w=800",
-    summary: "Ferrari hopes new aerodynamic upgrades will help close the gap.",
-    date: "June 23, 2024",
-  }
-];
+import React, { useState, useEffect } from "react";
+import { Trophy, Flag, Menu, X } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 const F1News = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [newsItems, setNewsItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await fetch("/api/news");
+        const data = await response.json();
+        setNewsItems(data);
+      } catch (err) {
+        console.error("Failed to load news:", err);
+      }
+    };
+
+    fetchNews();
+  }, []);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -40,14 +30,34 @@ const F1News = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="text-2xl font-black text-red-600 hover:text-red-400 transition-colors">
+              <Link
+                href="/"
+                className="text-2xl font-black text-red-600 hover:text-red-400 transition-colors"
+              >
                 F1
               </Link>
               <div className="hidden md:flex space-x-8">
-                <a href="#" className="text-white hover:text-red-400 transition-colors">Races</a>
-                <Link href="/drivers" className="text-white hover:text-red-400 transition-colors">Drivers</Link>
-                <a href="#" className="text-white hover:text-red-400 transition-colors">Teams</a>
-                <a href="#" className="text-red-400 font-semibold">News</a>
+                <a
+                  href="#"
+                  className="text-white hover:text-red-400 transition-colors"
+                >
+                  Races
+                </a>
+                <Link
+                  href="/drivers"
+                  className="text-white hover:text-red-400 transition-colors"
+                >
+                  Drivers
+                </Link>
+                <a
+                  href="#"
+                  className="text-white hover:text-red-400 transition-colors"
+                >
+                  Teams
+                </a>
+                <a href="#" className="text-red-400 font-semibold">
+                  News
+                </a>
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-4">
@@ -69,10 +79,21 @@ const F1News = () => {
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 bg-black/95 backdrop-blur-sm md:hidden">
           <div className="flex flex-col items-center justify-center h-full space-y-8 text-2xl">
-            <a href="#" className="text-white hover:text-red-400">Races</a>
-                <Link href="/drivers" className="text-white hover:text-red-400 transition-colors">Drivers</Link>
-            <a href="#" className="text-white hover:text-red-400">Teams</a>
-            <a href="#" className="text-red-400">News</a>
+            <a href="#" className="text-white hover:text-red-400">
+              Races
+            </a>
+            <Link
+              href="/drivers"
+              className="text-white hover:text-red-400 transition-colors"
+            >
+              Drivers
+            </Link>
+            <a href="#" className="text-white hover:text-red-400">
+              Teams
+            </a>
+            <a href="#" className="text-red-400">
+              News
+            </a>
           </div>
         </div>
       )}
@@ -81,11 +102,11 @@ const F1News = () => {
       <div className="relative h-80 overflow-hidden mt-16">
         <div className="absolute inset-0">
           <Image
-  src="https://images.unsplash.com/photo-1512070679279-c1bb5693ed66?w=1200"
-  alt="F1 News"
-  fill
-  className="object-cover w-full h-full"
-/>
+            src="https://images.unsplash.com/photo-1605106702842-0124c8aa490b?w=1200"
+            alt="F1 News"
+            fill
+            className="object-cover w-full h-full"
+          />
 
           <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
         </div>
@@ -111,27 +132,41 @@ const F1News = () => {
       <div className="py-16 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-black mb-4">Top Stories</h2>
-            <p className="text-gray-400 text-lg">Stay informed on the 2024 F1 season</p>
+            <h2 className="text-3xl md:text-5xl font-black mb-4">
+              Top Stories
+            </h2>
+            <p className="text-gray-400 text-lg">
+              Stay informed on the 2024 F1 season
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {newsItems.map((news) => (
+            {newsItems.map((news, idx) => (
               <div
-                key={news.id}
+                key={idx}
                 className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-800/50 transition-all group cursor-pointer transform hover:scale-105"
               >
                 <div className="relative">
-                  <Image
-  src={news.image}
-  alt={news.title}
-  width={800}
-  height={224} // Approx height for Tailwind's h-56 (14rem × 16px = 224px)
-  className="w-full h-56 object-cover"
-/>
+                  {news.image ? (
+                    <Image
+                      src={news.image}
+                      alt={news.title}
+                      width={800}
+                      height={224}
+                      className="w-full h-56 object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-56 bg-gray-700 flex items-center justify-center text-gray-400 text-sm">
+                      No Image Available
+                    </div>
+                  )}
 
                   <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded px-3 py-1 text-sm text-red-400 font-semibold">
-                    {news.date}
+                    {new Date(news.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </div>
                 </div>
 
