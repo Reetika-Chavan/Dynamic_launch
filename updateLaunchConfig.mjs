@@ -1,68 +1,73 @@
-import fs from 'fs';
-import path from 'path';
-import contentstack from '@contentstack/delivery-sdk';
-import dotenv from 'dotenv';
+import fs from 'fs'
+import path from 'path'
+import contentstack from '@contentstack/delivery-sdk'
+import dotenv from 'dotenv'
 
-dotenv.config();
+dotenv.config()
 
-// Setup stack
 const stack = contentstack.stack({
-  apiKey: process.env.NEXT_PUBLIC_CONTENTSTACK_API_KEY || '',
-  deliveryToken: process.env.NEXT_PUBLIC_CONTENTSTACK_DELIVERY_TOKEN || '',
-  environment: process.env.NEXT_PUBLIC_CONTENTSTACK_ENVIRONMENT || '',
-});
+  apiKey: process.env.NEXT_PUBLIC_CONTENTSTACK_API_KEY,
+  deliveryToken: process.env.NEXT_PUBLIC_CONTENTSTACK_DELIVERY_TOKEN,
+  environment: process.env.NEXT_PUBLIC_CONTENTSTACK_ENVIRONMENT,
+})
 
-// Fetch entries from launchconfig
-async function getLaunchEntries() {
-  const response = await stack
-    .contentType('launchconfig')
-    .query()
-    .toJSON()
-    .find();
+// ⚠️ Helper to categorize by type
+function categorizeEntries(entries) {
+  const redirects = []
+  const rewrites = []
+  const cache = []
 
-  const entries = response?.[0] || [];
+  for (const entry of entries) {
+    if (entry.title === 'redirect') {
+      redirects.push({
+        source: entry.source,
+        destination: entry.destination,
+        status_code: entry.status_code || 301,
+      })
+    } else if (entry.title === 'rewrite') {
+      rewrites.push({
+        source: entry.source,
+        destination: entry.destination,
+      })
+    } else if (entry.title === 'cache') {
+      cache.push({
+        path: entry.source,
+        cache_control: entry.cache_control || 'no-cache',
+      })
+    }
+  }
 
-  const redirects = entries
-    .filter(entry => entry.title === 'redirect')
-    .map(entry => ({
-      source: entry.source,
-      destination: entry.destination,
-      status_code: entry.status_code || 301,
-    }));
-
-  const rewrites = entries
-    .filter(entry => entry.title === 'rewrite')
-    .map(entry => ({
-      source: entry.source,
-      destination: entry.destination,
-    }));
-
-  const cacheRules = entries
-    .filter(entry => entry.title === 'cache')
-    .map(entry => ({
-      path: entry.source,
-      cache_control: entry.cache_control || 'no-cache',
-    }));
-
-  return {
-    redirects,
-    rewrites,
-    cache: {
-      rules: cacheRules,
-    },
-  };
+  return { redirects, rewrites, cache }
 }
 
-// Write launch.json file
+async function getLaunchEntries() {
+  const result = await stack
+    .contentType('launchconfig')
+    .entries()
+    .findAll() // ✅ Correct for v2
+
+  const entries = result.items || []
+  return categorizeEntries(entries)
+}
+
 async function updateLaunchJson() {
   try {
-    const launchData = await getLaunchEntries();
-    const filePath = path.resolve('./launch.json');
-    fs.writeFileSync(filePath, JSON.stringify(launchData, null, 2));
-    console.log('✅ launch.json successfully generated from Contentstack!');
-  } catch (error) {
-    console.error('❌ Error generating launch.json:', error);
+    const { redirects, rewrites, cache } = await getLaunchEntries()
+
+    const launchData = {
+      redirects,
+      rewrites,
+      cache: {
+        rules: cache,
+      },
+    }
+
+    const filePath = path.resolve('./launch.json')
+    fs.writeFileSync(filePath, JSON.stringify(launchData, null, 2))
+    console.log('✅ launch.json successfully generated from Contentstack!')
+  } catch (err) {
+    console.error('❌ Error generating launch.json:', err)
   }
 }
 
-updateLaunchJson();
+updateLaunchJson()
