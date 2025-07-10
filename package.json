@@ -11,6 +11,7 @@
     "prebuild": "npm run update-launch-config"
   },
   "dependencies": {
+    "@contentstack/delivery-sdk": "^4.8.0",
     "@contentstack/live-preview-utils": "^3.2.4",
     "contentstack": "^3.26.0",
     "dotenv": "^17.2.0",
