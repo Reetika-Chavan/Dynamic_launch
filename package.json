@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-launch-config": "node updateLaunchConfig.mjs",
+    "update-launch-config": "ts-node updateLaunchConfig.ts",
     "prebuild": "npm run update-launch-config"
   },
   "dependencies": {
@@ -30,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }
