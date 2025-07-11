@@ -24,7 +24,7 @@ const Stack = contentstack.Stack({
   environment: environment,
 });
 
-// Set host for dev11
+// Set host for dev11 (optional override)
 Stack.setHost("dev11-cdn.csnonprod.com");
 
 async function generateLaunchJson() {
@@ -45,20 +45,32 @@ async function generateLaunchJson() {
       const type = String(entry.title || "").toLowerCase();
       const source = String(entry.source || "").trim();
       const destination = String(entry.destination || "").trim();
-      const rawStatusCode = entry.status_code ?? "301";
-      const statusCode = parseInt(String(rawStatusCode), 10); // ✅ Ensure number
       const cacheControl = String(entry.cache_control || "").trim();
+
+      // Ensure status_code is always a number (important for Launch)
+      const rawStatusCode = entry.status_code;
+      const statusCode = Number(rawStatusCode);
+      if (type === "redirect" && isNaN(statusCode)) {
+        console.warn(`⚠️ Invalid status_code "${rawStatusCode}" for redirect from ${source} -> ${destination}. Using 301.`);
+      }
 
       switch (type) {
         case "redirect":
-          redirects.push({ source, destination, status_code: statusCode });
+          redirects.push({
+            source,
+            destination,
+            status_code: isNaN(statusCode) ? 301 : statusCode,
+          });
           break;
+
         case "rewrite":
           rewrites.push({ source, destination });
           break;
+
         case "cache":
           cache.push({ path: source, cache_control: cacheControl });
           break;
+
         default:
           console.warn(`⚠️ Unknown entry type: ${type}`);
       }
