@@ -3,10 +3,12 @@ import * as fs from "fs";
 import * as path from "path";
 import contentstack from "contentstack";
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
+
+dotenv.config({ path: ".env.local" }); // Load env vars manually
 
 console.log("🚀 Starting launch.json generation...");
 
+// Read and validate env variables
 const apiKey = process.env.CONTENTSTACK_API_KEY;
 const deliveryToken = process.env.CONTENTSTACK_DELIVERY_TOKEN;
 const environment = process.env.CONTENTSTACK_ENVIRONMENT;
@@ -15,12 +17,14 @@ if (!apiKey || !deliveryToken || !environment) {
   throw new Error("❌ Missing environment variables in .env.local");
 }
 
+// Initialize Contentstack SDK
 const Stack = contentstack.Stack({
   api_key: apiKey,
   delivery_token: deliveryToken,
   environment: environment,
 });
 
+// Set host for dev11
 Stack.setHost("dev11-cdn.csnonprod.com");
 
 async function generateLaunchJson() {
@@ -41,7 +45,8 @@ async function generateLaunchJson() {
       const type = String(entry.title || "").toLowerCase();
       const source = String(entry.source || "").trim();
       const destination = String(entry.destination || "").trim();
-      const statusCode = String(entry.status_code || "301").trim();
+      const rawStatusCode = entry.status_code ?? "301";
+      const statusCode = parseInt(String(rawStatusCode), 10); // ✅ Ensure number
       const cacheControl = String(entry.cache_control || "").trim();
 
       switch (type) {
