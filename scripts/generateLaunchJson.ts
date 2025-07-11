@@ -2,14 +2,14 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import contentstack from 'contentstack';
+import * as contentstack from 'contentstack';
 import * as dotenv from 'dotenv';
 
-dotenv.config({ path: '.env.local' }); // ✅ load env vars manually for scripts
+dotenv.config({ path: '.env.local' }); // Load env vars manually for script
 
 console.log('🚀 Starting launch.json generation...');
 
-// Validate and read environment variables
+// Read and validate environment variables
 const apiKey = process.env.CONTENTSTACK_API_KEY;
 const deliveryToken = process.env.CONTENTSTACK_DELIVERY_TOKEN;
 const environment = process.env.CONTENTSTACK_ENVIRONMENT;
@@ -18,14 +18,14 @@ if (!apiKey || !deliveryToken || !environment) {
   throw new Error('❌ Missing one of: CONTENTSTACK_API_KEY, DELIVERY_TOKEN, or ENVIRONMENT in .env.local');
 }
 
-// Correct way to initialize SDK
+// ✅ Correct: use contentstack.Stack (capital S)
 const Stack = contentstack.Stack({
   api_key: apiKey,
   delivery_token: deliveryToken,
   environment: environment,
 });
 
-// ✅ Set CDN host for dev11
+// Optional: set custom CDN host for non-prod
 Stack.setHost('dev11-cdn.csnonprod.com');
 
 async function generateLaunchJson() {
@@ -53,7 +53,7 @@ async function generateLaunchJson() {
           redirects.push({
             source,
             destination,
-            status_code: parseInt(status_code, 10) || 301,
+            status_code: String(status_code || '301'), // Must be string for Launch schema
           });
           break;
 
