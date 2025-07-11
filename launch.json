@@ -1,6 +1,9 @@
 {
-  "$schema": "https://www.contentstack.com/launch/schema/launch.schema.json",
-  "redirects": [],
-  "rewrites": [],
-  "cache": []
+  "redirects": [
+    {
+      "source": "/driver",
+      "destination": "/drivers",
+      "status_code": 301
+    }
+  ]
 }
