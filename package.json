@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev --turbopack",
-  "start": "next start",
-  "lint": "next lint",
-  "generate:launch": "ts-node --project tsconfig.scripts.json scripts/generateLaunchJson.ts",
-  "build": "npm run generate:launch && next build"
-},
+    "dev": "next dev --turbopack",
+    "start": "next start",
+    "lint": "next lint",
+    "generate:launch": "ts-node --project tsconfig.scripts.json scripts/generateLaunchJson.ts",
+    "build": "npm run generate:launch && next build"
+  },
   "dependencies": {
     "@contentstack/delivery-sdk": "^4.8.0",
     "@contentstack/live-preview-utils": "^3.2.4",
+    "ajv": "^8.17.1",
     "contentstack": "^3.26.0",
     "dotenv": "^17.2.0",
     "lucide-react": "^0.525.0",

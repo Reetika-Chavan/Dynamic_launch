@@ -1,15 +1,14 @@
-// scripts/generateLaunchJson.ts
-
 import * as fs from "fs";
 import * as path from "path";
 import contentstack from "contentstack";
 import * as dotenv from "dotenv";
+import Ajv from "ajv";
 
-dotenv.config({ path: ".env.local" }); // ✅ load env vars manually for scripts
+dotenv.config({ path: ".env.local" }); // ✅ load env vars manually
 
 console.log("🚀 Starting launch.json generation...");
 
-// Validate and read environment variables
+// ✅ Validate and read environment variables
 const apiKey = process.env.CONTENTSTACK_API_KEY;
 const deliveryToken = process.env.CONTENTSTACK_DELIVERY_TOKEN;
 const environment = process.env.CONTENTSTACK_ENVIRONMENT;
@@ -20,14 +19,12 @@ if (!apiKey || !deliveryToken || !environment) {
   );
 }
 
-// Correct way to initialize SDK
+// ✅ Initialize SDK and set host
 const Stack = contentstack.Stack({
   api_key: apiKey,
   delivery_token: deliveryToken,
   environment: environment,
 });
-
-// ✅ Set CDN host for dev11
 Stack.setHost("dev11-cdn.csnonprod.com");
 
 async function generateLaunchJson() {
@@ -61,7 +58,7 @@ async function generateLaunchJson() {
             status_code:
               typeof status_code === "number"
                 ? status_code
-                : parseInt(String(status_code), 10) || 301, // ✅ force number
+                : parseInt(String(status_code), 10) || 301, // ✅ number
           });
           break;
 
@@ -91,14 +88,65 @@ async function generateLaunchJson() {
       cache,
     };
 
+    // ✅ Validate schema before writing
+    const ajv = new Ajv();
+    const schema = {
+      type: "object",
+      properties: {
+        $schema: { type: "string" },
+        redirects: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["source", "destination", "status_code"],
+            properties: {
+              source: { type: "string" },
+              destination: { type: "string" },
+              status_code: { type: "integer" },
+            },
+          },
+        },
+        rewrites: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["source", "destination"],
+            properties: {
+              source: { type: "string" },
+              destination: { type: "string" },
+            },
+          },
+        },
+        cache: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["path", "cache_control"],
+            properties: {
+              path: { type: "string" },
+              cache_control: { type: "string" },
+            },
+          },
+        },
+      },
+      required: ["$schema", "redirects", "rewrites", "cache"],
+    };
+
+    const validate = ajv.compile(schema);
+    const valid = validate(launchJson);
+
+    console.log("🧾 launch.json preview:\n", JSON.stringify(launchJson, null, 2));
+
+    if (!valid) {
+      console.error("❌ launch.json schema validation failed:", validate.errors);
+      process.exit(1);
+    }
+
+    // ✅ Write to file
     const filePath = path.join(process.cwd(), "launch.json");
     fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2) + "\n");
 
     console.log("✅ launch.json generated at root");
-    console.log(
-      "📄 Final launch.json contents:",
-      JSON.stringify(launchJson, null, 2)
-    );
   } catch (error) {
     console.error("❌ Error generating launch.json:", error);
     process.exit(1);
