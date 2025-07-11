@@ -54,21 +54,29 @@ async function generateLaunchJson() {
       const { source, destination, status_code, cache_control } = entry;
 
       switch (type) {
-       case "redirect":
-  redirects.push({
-    source: String(source),
-    destination: String(destination),
-    status_code: String(status_code ?? "301"), // force to string
-  });
-  break;
-
+        case "redirect":
+          redirects.push({
+            source: String(source),
+            destination: String(destination),
+            status_code:
+              typeof status_code === "number"
+                ? status_code
+                : parseInt(String(status_code), 10) || 301, // ✅ force number
+          });
+          break;
 
         case "rewrite":
-          rewrites.push({ source, destination });
+          rewrites.push({
+            source: String(source),
+            destination: String(destination),
+          });
           break;
 
         case "cache":
-          cache.push({ path: source, cache_control });
+          cache.push({
+            path: String(source),
+            cache_control: String(cache_control),
+          });
           break;
 
         default:
@@ -76,16 +84,15 @@ async function generateLaunchJson() {
       }
     }
 
-   const launchJson = {
-  $schema: "https://www.contentstack.com/launch/schema/launch.schema.json",
-  redirects,
-  rewrites,
-  cache,
-};
+    const launchJson = {
+      $schema: "https://www.contentstack.com/launch/schema/launch.schema.json",
+      redirects,
+      rewrites,
+      cache,
+    };
 
-const filePath = path.join(process.cwd(), "launch.json");
-fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2) + "\n");
-
+    const filePath = path.join(process.cwd(), "launch.json");
+    fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2) + "\n");
 
     console.log("✅ launch.json generated at root");
     console.log(
