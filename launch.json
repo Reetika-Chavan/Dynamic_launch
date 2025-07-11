@@ -1,9 +1,0 @@
-{
-  "redirects": [
-    {
-      "source": "/driver",
-      "destination": "/drivers",
-      "status_code": 301
-    }
-  ]
-}
