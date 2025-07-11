@@ -58,10 +58,7 @@ async function generateLaunchJson() {
           redirects.push({
             source,
             destination,
-            status_code:
-              typeof status_code === "string"
-                ? parseInt(status_code, 10)
-                : status_code || 301,
+            status_code: String(status_code || "301"),
           });
           break;
 
