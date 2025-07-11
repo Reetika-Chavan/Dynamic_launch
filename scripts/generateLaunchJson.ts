@@ -54,19 +54,14 @@ async function generateLaunchJson() {
       const { source, destination, status_code, cache_control } = entry;
 
       switch (type) {
-        case "redirect":
-          // ✅ Ensure status_code is a number
-          const parsedStatusCode =
-            typeof status_code === "number"
-              ? status_code
-              : parseInt(String(status_code), 10) || 301;
+       case "redirect":
+  redirects.push({
+    source: String(source),
+    destination: String(destination),
+    status_code: String(status_code ?? "301"), // force to string
+  });
+  break;
 
-          redirects.push({
-            source,
-            destination,
-            status_code: parsedStatusCode,
-          });
-          break;
 
         case "rewrite":
           rewrites.push({ source, destination });
