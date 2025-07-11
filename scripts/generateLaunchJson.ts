@@ -82,11 +82,10 @@ async function generateLaunchJson() {
     }
 
     const launchJson = {
-      $schema: "https://www.contentstack.com/launch/schema/launch.schema.json",
-      redirects,
-      rewrites,
-      cache,
-    };
+  redirects,
+  rewrites,
+  cache,
+};
 
     const filePath = path.join(process.cwd(), "launch.json");
     fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2) + "\n");
