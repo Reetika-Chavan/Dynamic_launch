@@ -86,7 +86,7 @@ async function generateLaunchJson() {
     };
 
     const filePath = path.join(process.cwd(), "launch.json");
-    fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2) + "\n");
 
     console.log("✅ launch.json generated at root");
     console.log(
