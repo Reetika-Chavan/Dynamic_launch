@@ -29,43 +29,76 @@ async function generateLaunchJson() {
     const result = await query.toJSON().find();
     const entries = result[0];
 
-    if (!entries.length) {
-      console.warn("No entries found in launchconfig.");
-    }
-
     const redirects: any[] = [];
+    const rewrites: any[] = [];
 
     for (const entry of entries) {
+      const type = entry.title?.toLowerCase(); 
       const source = entry.source || "";
       const destination = entry.destination || "";
       const statusCode = Number(entry.statuscode) || 308;
 
-      const headersObj: Record<string, string> = {};
-      const headerPairs = entry.response?.headers?.header_pairs || [];
-
-      for (const pair of headerPairs) {
-        if (pair.key && pair.value) {
-          headersObj[pair.key] = pair.value;
+      // response header
+      const resHeaders: Record<string, string> = {};
+      const resPairs = entry.response?.headers?.header_pairs || [];
+      if (Array.isArray(resPairs)) {
+        for (const pair of resPairs) {
+          if (pair.key && pair.value) {
+            resHeaders[pair.key] = pair.value;
+          }
         }
       }
 
-      redirects.push({
-        source,
-        destination,
-        statusCode,
-        response: {
-          headers: headersObj,
-        },
-      });
+      // request header
+      const reqHeaders: Record<string, string> = {};
+      const requestGroups = entry.request || [];
+
+      const requestsArray = Array.isArray(requestGroups) ? requestGroups : [requestGroups];
+
+      for (const request of requestsArray) {
+        const reqPairs = request?.headers?.header_pairs || [];
+        if (Array.isArray(reqPairs)) {
+          for (const pair of reqPairs) {
+            if (pair.key && pair.value) {
+              reqHeaders[pair.key] = pair.value;
+            }
+          }
+        }
+      }
+
+      if (type === "redirect") {
+        redirects.push({
+          source,
+          destination,
+          statusCode,
+          response: Object.keys(resHeaders).length > 0 ? { headers: resHeaders } : undefined,
+        });
+      } else if (type === "rewrites") {
+        const rewriteEntry: any = {
+          source,
+          destination,
+        };
+
+        if (Object.keys(reqHeaders).length > 0) {
+          rewriteEntry.request = { headers: reqHeaders };
+        }
+
+        if (Object.keys(resHeaders).length > 0) {
+          rewriteEntry.response = { headers: resHeaders };
+        }
+
+        rewrites.push(rewriteEntry);
+      }
     }
 
-    const launchJson = { redirects };
+    const launchJson: any = {};
+    if (redirects.length > 0) launchJson.redirects = redirects;
+    if (rewrites.length > 0) launchJson.rewrites = rewrites;
 
     const filePath = path.join(process.cwd(), "launch.json");
     fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2));
 
-    console.log("launch.json preview:\\n", JSON.stringify(launchJson, null, 2));
-    console.log("✅ launch.json generated at root");
+    console.log("✅ launch.json generated:\n", JSON.stringify(launchJson, null, 2));
   } catch (error) {
     console.error("❌ Error generating launch.json:", error);
     process.exit(1);

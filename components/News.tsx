@@ -141,42 +141,45 @@ const F1News = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {newsItems.map((news, idx) => (
-              <div
-                key={idx}
-                className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-800/50 transition-all group cursor-pointer transform hover:scale-105"
-              >
-                <div className="relative">
-                  {news.image ? (
-                    <Image
-                      src={news.image}
-                      alt={news.title}
-                      width={800}
-                      height={224}
-                      className="w-full h-56 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-56 bg-gray-700 flex items-center justify-center text-gray-400 text-sm">
-                      No Image Available
-                    </div>
-                  )}
-
-                  <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded px-3 py-1 text-sm text-red-400 font-semibold">
-                    {new Date(news.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2">{news.title}</h3>
-                  <p className="text-gray-400 text-sm">{news.summary}</p>
-                </div>
-              </div>
-            ))}
+  {newsItems.map((news, idx) => (
+    <Link
+      href={idx === 0 ? "/article" : "#"}
+      key={idx}
+      className="group"
+    >
+      <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-800/50 transition-all group cursor-pointer transform hover:scale-105">
+        <div className="relative">
+          {news.image ? (
+            <Image
+              src={news.image}
+              alt={news.title}
+              width={800}
+              height={224}
+              className="w-full h-56 object-cover"
+            />
+          ) : (
+            <div className="w-full h-56 bg-gray-700 flex items-center justify-center text-gray-400 text-sm">
+              No Image Available
+            </div>
+          )}
+          <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded px-3 py-1 text-sm text-red-400 font-semibold">
+            {new Date(news.date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
           </div>
+        </div>
+
+        <div className="p-6">
+          <h3 className="text-xl font-bold mb-2">{news.title}</h3>
+          <p className="text-gray-400 text-sm">{news.summary}</p>
+        </div>
+      </div>
+    </Link>
+  ))}
+</div>
+
         </div>
       </div>
 
