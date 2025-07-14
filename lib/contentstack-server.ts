@@ -14,5 +14,4 @@ export const Stack = contentstack.Stack({
   environment: environment,
 });
 
-// ✅ Set correct host for Dev11 (this was missing earlier)
 Stack.setHost('dev11-cdn.csnonprod.com');
