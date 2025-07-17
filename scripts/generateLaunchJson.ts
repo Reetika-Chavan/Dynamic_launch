@@ -10,10 +10,9 @@ console.log("🚀 Starting launch.json generation...");
 const apiKey = process.env.CONTENTSTACK_API_KEY;
 const deliveryToken = process.env.CONTENTSTACK_DELIVERY_TOKEN;
 const environment = process.env.CONTENTSTACK_ENVIRONMENT?.toLowerCase();
-const host = process.env.CONTENTSTACK_HOST || "stag-cdn.csnonprod.com";
 
 if (!apiKey || !deliveryToken || !environment) {
-  throw new Error("Missing required environment variables in .env.local");
+  throw new Error("Missing environment variables in .env.local");
 }
 
 const Stack = contentstack.Stack({
@@ -21,98 +20,92 @@ const Stack = contentstack.Stack({
   delivery_token: deliveryToken,
   environment,
 });
-Stack.setHost(host);
 
-// extract header key-value pairs
-const extractHeaders = (group: any) => {
-  const headers: Record<string, string> = {};
-  const pairs = group?.headers?.header_pairs || [];
-  if (Array.isArray(pairs)) {
-    for (const pair of pairs) {
-      if (pair.key && pair.value) {
-        headers[pair.key] = pair.value;
-      }
-    }
-  }
-  return headers;
-};
+Stack.setHost("dev11-cdn.csnonprod.com");
 
 async function fetchEntries(contentType: string) {
-  const query = Stack.ContentType(contentType).Query();
-  const result = await query.toJSON().find();
-  return result[0] || [];
-}
-
-// for Env entry
-function isEntryForEnv(entry: any): boolean {
-  if (entry.environment !== undefined) {
-    return entry.environment?.toLowerCase() === environment;
-  }
-  return true; 
+  const query = Stack.ContentType(contentType).Query().toJSON();
+  const result = await query.find();
+  return result[0]; 
 }
 
 async function generateLaunchJson() {
   try {
-    const [redirectEntries, rewriteEntries, cacheEntries] = await Promise.all([
-      fetchEntries("redirects"),
-      fetchEntries("rewrites"),
-      fetchEntries("cache"),
-    ]);
+    const redirects = await fetchEntries("redirects");
+    const rewrites = await fetchEntries("rewrites");
+    const cacheEntries = await fetchEntries("cache");
 
-    const redirects: any[] = [];
-    const rewrites: any[] = [];
-    const cachePrimingUrls: string[] = [];
+    const launchJson: any = {};
 
-    // Handle Redirects
-    for (const entry of redirectEntries) {
-      if (!isEntryForEnv(entry)) continue;
-
+    // Redirects
+    const redirectList = redirects.map((entry: any) => {
       const source = entry.source || "";
       const destination = entry.destination || "";
       const statusCode = Number(entry.statuscode) || 308;
-      const resHeaders = extractHeaders(entry.response);
 
-      redirects.push({
+      const resHeaders: Record<string, string> = {};
+      const resPairs = entry.response?.headers?.header_pairs || [];
+      for (const pair of resPairs) {
+        if (pair.key && pair.value) {
+          resHeaders[pair.key] = pair.value;
+        }
+      }
+
+      return {
         source,
         destination,
         statusCode,
         response: Object.keys(resHeaders).length > 0 ? { headers: resHeaders } : undefined,
-      });
-    }
+      };
+    });
 
-    // Handle Rewrites
-    for (const entry of rewriteEntries) {
-      if (!isEntryForEnv(entry)) continue;
+    if (redirectList.length > 0) launchJson.redirects = redirectList;
 
+    // Rewrites
+    const rewriteList = rewrites.map((entry: any) => {
       const source = entry.source || "";
       const destination = entry.destination || "";
-      const resHeaders = extractHeaders(entry.response);
-      const reqHeaders = extractHeaders(entry.request);
 
-      const rewriteEntry: any = { source, destination };
-      if (Object.keys(reqHeaders).length > 0) rewriteEntry.request = { headers: reqHeaders };
-      if (Object.keys(resHeaders).length > 0) rewriteEntry.response = { headers: resHeaders };
-      rewrites.push(rewriteEntry);
-    }
+      const resHeaders: Record<string, string> = {};
+      const reqHeaders: Record<string, string> = {};
 
-    // Handle CachePriming
+      const resPairs = entry.response?.headers?.header_pairs || [];
+      for (const pair of resPairs) {
+        if (pair.key && pair.value) {
+          resHeaders[pair.key] = pair.value;
+        }
+      }
+
+      const reqPairs = entry.request?.headers?.header_pairs || [];
+      for (const pair of reqPairs) {
+        if (pair.key && pair.value) {
+          reqHeaders[pair.key] = pair.value;
+        }
+      }
+
+      const obj: any = { source, destination };
+      if (Object.keys(reqHeaders).length > 0) obj.request = { headers: reqHeaders };
+      if (Object.keys(resHeaders).length > 0) obj.response = { headers: resHeaders };
+
+      return obj;
+    });
+
+    if (rewriteList.length > 0) launchJson.rewrites = rewriteList;
+
+    // Cache Priming
+    const cacheUrls: string[] = [];
+
     for (const entry of cacheEntries) {
-      if (!isEntryForEnv(entry)) continue;
-
-      const urls = entry.cache?.cachepriming?.urls || [];
+      const urls = entry.cachepriming?.urls || [];
       if (Array.isArray(urls)) {
-        cachePrimingUrls.push(...urls.filter((u: string) => typeof u === "string"));
+        cacheUrls.push(...urls.filter((u: string) => typeof u === "string"));
       }
     }
 
-    // Build launch.json
-    const launchJson: any = {};
-    if (redirects.length > 0) launchJson.redirects = redirects;
-    if (rewrites.length > 0) launchJson.rewrites = rewrites;
-    if (cachePrimingUrls.length > 0) {
+    if (cacheUrls.length > 0) {
       launchJson.cache = {
         cachePriming: {
-          urls: Array.from(new Set(cachePrimingUrls)),
+          urls: Array.from(new Set(cacheUrls)),
         },
       };
     }
@@ -120,7 +113,7 @@ async function generateLaunchJson() {
     const filePath = path.join(process.cwd(), "launch.json");
     fs.writeFileSync(filePath, JSON.stringify(launchJson, null, 2));
 
-    console.log("✅ launch.json generated successfully:\n", JSON.stringify(launchJson, null, 2));
+    console.log("✅ launch.json generated:\n", JSON.stringify(launchJson, null, 2));
   } catch (error) {
     console.error("❌ Error generating launch.json:", error);
     process.exit(1);
