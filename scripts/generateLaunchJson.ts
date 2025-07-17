@@ -38,57 +38,61 @@ async function generateLaunchJson() {
     const launchJson: any = {};
 
     // Redirects
-    const redirectList = redirects.map((entry: any) => {
-      const source = entry.source || "";
-      const destination = entry.destination || "";
-      const statusCode = Number(entry.statuscode) || 308;
+    const redirectList = redirects
+      .filter((entry: any) => !entry.environment || entry.environment.toLowerCase() === environment)
+      .map((entry: any) => {
+        const source = entry.source || "";
+        const destination = entry.destination || "";
+        const statusCode = Number(entry.statuscode) || 308;
 
-      const resHeaders: Record<string, string> = {};
-      const resPairs = entry.response?.headers?.header_pairs || [];
-      for (const pair of resPairs) {
-        if (pair.key && pair.value) {
-          resHeaders[pair.key] = pair.value;
+        const resHeaders: Record<string, string> = {};
+        const resPairs = entry.response?.headers?.header_pairs || [];
+        for (const pair of resPairs) {
+          if (pair.key && pair.value) {
+            resHeaders[pair.key] = pair.value;
+          }
         }
-      }
 
-      return {
-        source,
-        destination,
-        statusCode,
-        response: Object.keys(resHeaders).length > 0 ? { headers: resHeaders } : undefined,
-      };
-    });
+        return {
+          source,
+          destination,
+          statusCode,
+          response: Object.keys(resHeaders).length > 0 ? { headers: resHeaders } : undefined,
+        };
+      });
 
     if (redirectList.length > 0) launchJson.redirects = redirectList;
 
     // Rewrites
-    const rewriteList = rewrites.map((entry: any) => {
-      const source = entry.source || "";
-      const destination = entry.destination || "";
+    const rewriteList = rewrites
+      .filter((entry: any) => !entry.environment || entry.environment.toLowerCase() === environment)
+      .map((entry: any) => {
+        const source = entry.source || "";
+        const destination = entry.destination || "";
 
-      const resHeaders: Record<string, string> = {};
-      const reqHeaders: Record<string, string> = {};
+        const resHeaders: Record<string, string> = {};
+        const reqHeaders: Record<string, string> = {};
 
-      const resPairs = entry.response?.headers?.header_pairs || [];
-      for (const pair of resPairs) {
-        if (pair.key && pair.value) {
-          resHeaders[pair.key] = pair.value;
+        const resPairs = entry.response?.headers?.header_pairs || [];
+        for (const pair of resPairs) {
+          if (pair.key && pair.value) {
+            resHeaders[pair.key] = pair.value;
+          }
         }
-      }
 
-      const reqPairs = entry.request?.headers?.header_pairs || [];
-      for (const pair of reqPairs) {
-        if (pair.key && pair.value) {
-          reqHeaders[pair.key] = pair.value;
+        const reqPairs = entry.request?.headers?.header_pairs || [];
+        for (const pair of reqPairs) {
+          if (pair.key && pair.value) {
+            reqHeaders[pair.key] = pair.value;
+          }
         }
-      }
 
-      const obj: any = { source, destination };
-      if (Object.keys(reqHeaders).length > 0) obj.request = { headers: reqHeaders };
-      if (Object.keys(resHeaders).length > 0) obj.response = { headers: resHeaders };
+        const obj: any = { source, destination };
+        if (Object.keys(reqHeaders).length > 0) obj.request = { headers: reqHeaders };
+        if (Object.keys(resHeaders).length > 0) obj.response = { headers: resHeaders };
 
-      return obj;
-    });
+        return obj;
+      });
 
     if (rewriteList.length > 0) launchJson.rewrites = rewriteList;
 
@@ -96,16 +100,18 @@ async function generateLaunchJson() {
     const cacheUrls: string[] = [];
 
     for (const entry of cacheEntries) {
-      const urls = entry.cachepriming?.urls || [];
-      if (Array.isArray(urls)) {
-        cacheUrls.push(...urls.filter((u: string) => typeof u === "string"));
+      if (!entry.environment || entry.environment.toLowerCase() === environment) {
+        const urls = entry.cache?.cachepriming?.urls || [];
+        if (Array.isArray(urls)) {
+          cacheUrls.push(...urls.filter((u: string) => typeof u === "string"));
+        }
       }
     }
 
     if (cacheUrls.length > 0) {
       launchJson.cache = {
         cachePriming: {
-          urls: Array.from(new Set(cacheUrls)),
+          urls: Array.from(new Set(cacheUrls)), 
         },
       };
     }
