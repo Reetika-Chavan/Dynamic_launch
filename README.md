@@ -110,8 +110,8 @@ testproject/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd testproject
+   git clone https://github.com/Reetika-Chavan/Dynamic_launch.git
+   cd Dynamic_launch
    ```
 
 2. **Install dependencies**
