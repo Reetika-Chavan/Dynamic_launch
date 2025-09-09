@@ -1,4 +1,4 @@
-import * as contentstack from "contentstack";
+import contentstack from "contentstack";
 
 const apiKey = process.env.CONTENTSTACK_API_KEY;
 const deliveryToken = process.env.CONTENTSTACK_DELIVERY_TOKEN;
