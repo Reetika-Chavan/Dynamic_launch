@@ -1,36 +1,22 @@
 import * as fs from "fs";
 import * as path from "path";
-import contentstack from "contentstack";
 import * as dotenv from "dotenv";
+import { Stack } from "../lib/contentstack-server";
 
 dotenv.config({ path: ".env.local" });
 
 console.log("🚀 Starting launch.json generation...");
 
-const apiKey = process.env.CONTENTSTACK_API_KEY;
-const deliveryToken = process.env.CONTENTSTACK_DELIVERY_TOKEN;
-const environment = process.env.CONTENTSTACK_ENVIRONMENT?.toLowerCase();
-
-if (!apiKey || !deliveryToken || !environment) {
-  throw new Error("Missing environment variables in .env.local");
-}
-
-const Stack = contentstack.Stack({
-  api_key: apiKey,
-  delivery_token: deliveryToken,
-  environment,
-});
-
-Stack.setHost("dev11-cdn.csnonprod.com");
-
 async function fetchEntries(contentType: string) {
   const query = Stack.ContentType(contentType).Query().toJSON();
   const result = await query.find();
-  return result[0]; 
+  return result[0];
 }
 
 async function generateLaunchJson() {
   try {
+    const environment = process.env.CONTENTSTACK_ENVIRONMENT?.toLowerCase();
+
     const redirects = await fetchEntries("redirects");
     const rewrites = await fetchEntries("rewrites");
     const cacheEntries = await fetchEntries("cache");
@@ -111,7 +97,7 @@ async function generateLaunchJson() {
     if (cacheUrls.length > 0) {
       launchJson.cache = {
         cachePriming: {
-          urls: Array.from(new Set(cacheUrls)), 
+          urls: Array.from(new Set(cacheUrls)),
         },
       };
     }
